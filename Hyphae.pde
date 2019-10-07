@@ -31,6 +31,14 @@ void mouseClicked()
   g_ActiveBranches.add(new Branch(new Node(new PVector(mouseX, mouseY), random(15) + g_MinNodeDiameter))); 
 }
 
+void keyPressed()
+{
+  if (key == 'r' || key == 'R')
+  {
+     Reset(); 
+  }
+}
+
 float GetDistanceFromCenter(PVector position)
 {
   return g_Center.dist(position);
@@ -67,6 +75,20 @@ boolean CanAddNodeTo(PVector position, float diameter)
    }
 
    return false;
+}
+
+void Reset()
+{
+  g_ActiveBranches = new ArrayList<Branch>();
+  int numBranches = (int)random(4);
+  
+  for (int iter = 0; iter < numBranches; ++iter)
+  {
+     PVector newNodePos = PVector.random2D();
+     newNodePos.mult(random(g_MaxDistFromCenter));
+     newNodePos.add(g_Center);
+     g_ActiveBranches.add(new Branch(new Node(newNodePos, random(15) + g_MinNodeDiameter))); 
+  }
 }
 
 boolean IsNullWithEpsilon(float value)
