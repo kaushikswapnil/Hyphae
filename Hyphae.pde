@@ -28,7 +28,7 @@ void draw()
 
 void mouseClicked()
 {
-  g_ActiveBranches.add(new Branch(new Node(new PVector(mouseX, mouseY), random(50) + g_MinNodeDiameter))); 
+  g_ActiveBranches.add(new Branch(new Node(new PVector(mouseX, mouseY), random(15) + g_MinNodeDiameter))); 
 }
 
 float GetDistanceFromCenter(PVector position)
@@ -44,7 +44,7 @@ float GetDistanceToClosestSurface(PVector position)
    {
       float surfDist = branch.GetClosestDistanceToBranchSurface(position);
         
-      if (surfDist < recordDist)
+      if (IsLesserWithEpsilon(surfDist, recordDist))
       {
          recordDist = surfDist; 
       } 
@@ -56,10 +56,10 @@ float GetDistanceToClosestSurface(PVector position)
 boolean CanAddNodeTo(PVector position, float diameter)
 {
    float distToClosestSurf = GetDistanceToClosestSurface(position);
-   boolean hasSpaceToMakeNewNode = (distToClosestSurf >= diameter/2);
+   boolean hasSpaceToMakeNewNode = IsGreaterOrEqualWithEpsilon(distToClosestSurf, diameter/2);
    
    float distToCenter = GetDistanceFromCenter(position);
-   boolean isWithinDrawRadius = (distToCenter < g_MaxDistFromCenter);
+   boolean isWithinDrawRadius = IsLesserOrEqualWithEpsilon(distToCenter, g_MaxDistFromCenter);
    
    if (hasSpaceToMakeNewNode && isWithinDrawRadius)
    {
@@ -67,4 +67,34 @@ boolean CanAddNodeTo(PVector position, float diameter)
    }
 
    return false;
+}
+
+boolean IsNullWithEpsilon(float value)
+{
+  return abs(value - 0.0) <= EPSILON;
+}
+
+boolean IsGreaterWithEpsilon(float a, float b)
+{
+  return (a - b) > EPSILON;
+}
+
+boolean IsLesserWithEpsilon(float a, float b)
+{
+  return (a - b) < EPSILON;
+}
+
+boolean IsEqualWithEpsilon(float a, float b)
+{
+  return IsNullWithEpsilon(a-b); 
+}
+
+boolean IsGreaterOrEqualWithEpsilon(float a, float b)
+{
+   return IsGreaterWithEpsilon(a, b) || IsEqualWithEpsilon(a, b); 
+}
+
+boolean IsLesserOrEqualWithEpsilon(float a, float b)
+{
+   return IsLesserWithEpsilon(a, b) || IsEqualWithEpsilon(a, b); 
 }

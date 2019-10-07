@@ -33,12 +33,27 @@ class Branch
      m_NodesAddedSinceLastReorientation = 0;
    }
    
+   Branch(ArrayList<Node> startingNodes, PVector travelDir)
+   {
+     m_Nodes = startingNodes;
+     m_SubBranches = new ArrayList<Branch>();
+     
+     m_CurrentTravelDirection = travelDir.get();
+     m_CurrentTravelDirection.normalize();
+     
+     m_ActiveGrowth = true;
+     
+     m_NodesAddedSinceLastReorientation = 0;
+   }
+   
    void Update()
    {
      if (m_ActiveGrowth)
      {
         ActiveGrowthUpdate(); 
      }
+     
+     TryBranching();
      
      for (Branch branch : m_SubBranches)
      {
@@ -52,7 +67,9 @@ class Branch
       fill(0);
       for (int nodeIter = 0; nodeIter < m_Nodes.size(); ++nodeIter)
       {
-         m_Nodes.get(nodeIter).Display();
+         //m_Nodes.get(nodeIter).Display();
+         float branchWidth = m_Nodes.get(nodeIter).m_Diameter*2/5;
+         strokeWeight(branchWidth);
          if (nodeIter + 1 < m_Nodes.size())
          {
             //strokeWeight(4 * m_Nodes.get(nodeIter).m_Diameter/2);
@@ -69,11 +86,12 @@ class Branch
    
    void ActiveGrowthUpdate()
    {
-     if (millis() % 3 == 0)
+     boolean shouldGrow = IsLesserOrEqualWithEpsilon(random(1), 0.5f);
+     if (shouldGrow)
      {
        Node growNode = m_Nodes.get(m_Nodes.size()-1);
        float newDiameter = growNode.m_Diameter;
-       if (newDiameter < g_MinNodeDiameter)
+       if (IsLesserWithEpsilon(newDiameter, g_MinNodeDiameter))
        {
           newDiameter = g_MinNodeDiameter; 
        }
@@ -87,11 +105,23 @@ class Branch
        }
        else
        {
-         m_ActiveGrowth = false;
+         m_ActiveGrowth = false; //<>//
        }
      }
-
-     boolean shouldBranch = millis() % 30 == 0 && m_Nodes.size() > 2;
+     
+     if (m_NodesAddedSinceLastReorientation > g_NumNodeThresholdForBranchReorientation)
+     {
+       ReorientBranch();
+     }
+     else //try wobble
+     {
+       m_CurrentTravelDirection = GetPotentialWobbleDirection(m_CurrentTravelDirection);
+     }
+   }
+   
+   void TryBranching()
+   {
+     boolean shouldBranch = IsLesserOrEqualWithEpsilon(random(1), 0.03f) && m_Nodes.size() >= 2;
      
      if (shouldBranch)
      {
@@ -100,7 +130,7 @@ class Branch
        Node branchGrowthNode = m_Nodes.get(branchGrowthStartIndex);
        
        PVector branchDirectionAtGrowthNode = PVector.sub(m_Nodes.get(branchGrowthStartIndex+1).m_Position, branchGrowthNode.m_Position);
-
+       branchDirectionAtGrowthNode.normalize();
        //Iterate till max 
        for (int branchAttemptIter = 0; branchAttemptIter < 6; ++branchAttemptIter)
        {    
@@ -111,15 +141,14 @@ class Branch
          if (CanAddNodeTo(newNodePos, newNodeDiameter))
          {
            Node newNode = new Node(newNodePos, newNodeDiameter);
-           m_SubBranches.add(new Branch(newNode, potentialReorientDir));
+           ArrayList<Node> subBranchNodes = new ArrayList<Node>();
+           subBranchNodes.add(branchGrowthNode);
+           subBranchNodes.add(newNode);
+           
+           m_SubBranches.add(new Branch(subBranchNodes, potentialReorientDir));
            break; //Break loop if we have a new branch
          }
        }
-     }
-     
-     if (m_NodesAddedSinceLastReorientation > g_NumNodeThresholdForBranchReorientation)
-     {
-       ReorientBranch();
      }
    }
    
@@ -131,7 +160,7 @@ class Branch
       {
         float surfDist = node.GetClosestDistanceToNodeSurface(fromPos);
         
-        if (surfDist < recordDist)
+        if (IsLesserWithEpsilon(surfDist, recordDist))
         {
            recordDist = surfDist; 
         } 
@@ -141,7 +170,7 @@ class Branch
       {
         float surfDist = branch.GetClosestDistanceToBranchSurface(fromPos);
         
-        if (surfDist < recordDist)
+        if (IsLesserWithEpsilon(surfDist, recordDist))
         {
            recordDist = surfDist; 
         } 
@@ -158,11 +187,25 @@ class Branch
    
    PVector GetPotentialReorientationDirection(PVector currentBranchDir)
    {
-     PVector randomDir = PVector.random2D();
-     
      Node lastNode = m_Nodes.get(m_Nodes.size() - 1);
-     PVector wanderPointDisp = PVector.mult(currentBranchDir, lastNode.m_Diameter/2);
-     wanderPointDisp.add(randomDir.mult(lastNode.m_Diameter/2));
+     float dirWeightage = lastNode.m_Diameter/2;
+     return GetPotentialReorientationDirection(currentBranchDir, dirWeightage, dirWeightage);
+   }
+   
+   PVector GetPotentialWobbleDirection(PVector currentBranchDir)
+   {
+     Node lastNode = m_Nodes.get(m_Nodes.size() - 1);
+     float curDirWeightage = lastNode.m_Diameter/2;
+     float randDirWeightage = lastNode.m_Diameter/6;
+     return GetPotentialReorientationDirection(currentBranchDir, curDirWeightage, randDirWeightage);
+   }
+   
+   PVector GetPotentialReorientationDirection(PVector currentBranchDir, float currentDirWeightage, float randomDirWeightage)
+   {
+     PVector randomDir = PVector.random2D();
+
+     PVector wanderPointDisp = PVector.mult(currentBranchDir, currentDirWeightage);
+     wanderPointDisp.add(randomDir.mult(randomDirWeightage));
      
      PVector potentialDirection = wanderPointDisp;
      potentialDirection.normalize();
