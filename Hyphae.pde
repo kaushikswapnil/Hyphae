@@ -87,7 +87,7 @@ void Reset()
      PVector newNodePos = PVector.random2D();
      newNodePos.mult(random(g_MaxDistFromCenter));
      newNodePos.add(g_Center);
-     g_ActiveBranches.add(new Branch(new Node(newNodePos, random(15) + g_MinNodeDiameter))); 
+     g_ActiveBranches.add(new Branch(new Node(newNodePos, random(30) + g_MinNodeDiameter))); 
   }
 }
 

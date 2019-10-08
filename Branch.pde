@@ -68,7 +68,7 @@ class Branch
       for (int nodeIter = 0; nodeIter < m_Nodes.size(); ++nodeIter)
       {
          //m_Nodes.get(nodeIter).Display();
-         float branchWidth = m_Nodes.get(nodeIter).m_Diameter*2/5;
+         float branchWidth = m_Nodes.get(nodeIter).m_Diameter*3/5;
          strokeWeight(branchWidth);
          if (nodeIter + 1 < m_Nodes.size())
          {
@@ -91,6 +91,13 @@ class Branch
      {
        Node growNode = m_Nodes.get(m_Nodes.size()-1);
        float newDiameter = growNode.m_Diameter;
+       
+       //Adding a 5 percent chance to create a smaller node next
+       if (IsLesserWithEpsilon(random(1.0), 0.05))
+       {
+          newDiameter *= 0.9; 
+       }
+       
        if (IsLesserWithEpsilon(newDiameter, g_MinNodeDiameter))
        {
           newDiameter = g_MinNodeDiameter; 
