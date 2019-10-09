@@ -212,7 +212,7 @@ class Branch
      PVector randomDir = PVector.random2D();
 
      PVector wanderPointDisp = PVector.mult(currentBranchDir, currentDirWeightage);
-     wanderPointDisp.add(randomDir.mult(randomDirWeightage));
+     wanderPointDisp.add(PVector.mult(randomDir, randomDirWeightage));
      
      PVector potentialDirection = wanderPointDisp;
      potentialDirection.normalize();
